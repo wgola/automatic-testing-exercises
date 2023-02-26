@@ -1,0 +1,31 @@
+name: ci-python-unittest
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+      - name: Test with unittest
+        run: |
+          for commit in $(git rev-list --reverse ${{ github.event.before }}..${{ github.event.after }}); do
+              git checkout $commit
+              python -m unittest discover -p 'test_*.py'
+          done
